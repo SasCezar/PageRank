@@ -26,10 +26,10 @@ class App {
       System.out.println(record.get("title").asString + " " + record.get("name").asString)
     }
 
-
     session.close()
     driver.close()
     */
+
     val conf = new SparkConf().setAppName("SparkDBP").setMaster("local")
     conf.set("spark.neo4j.bolt.user", "neo4j")
     conf.set("spark.neo4j.bolt.password", "spokebest")
