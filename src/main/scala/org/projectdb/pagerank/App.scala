@@ -8,7 +8,7 @@ import org.apache.spark.graphx._
 import org.apache.spark.graphx.lib._
 
 
-class App {
+object App {
 
   def main(args: Array[String]) {
     /*
