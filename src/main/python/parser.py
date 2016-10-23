@@ -1,4 +1,5 @@
 import json
+import urlparse
 
 wat_file = "..\\..\\..\\data\\sample_20.json"
 
@@ -12,6 +13,9 @@ HTML_METADATA = 'HTML-Metadata'
 LINKS = 'Links'
 
 RESPONSE = 'response'
+HREF = 'href'
+URL = 'url'
+URL_TYPES = [HREF, URL]
 
 
 def is_response(json):
@@ -47,8 +51,22 @@ def get_links(json):
 
 
 def filter(links):
-    # TODO Implement
-    return links
+    """
+    Given a list of dictionaries returns a set of all valid links contained in the dictionaries
+    :param links:
+    :return:
+    """
+    results = []
+    for link in links:
+        add = False
+        for key, value in link.items():
+            if key in URL_TYPES and bool(urlparse.urlparse(value).scheme):
+                result = [value]
+            if HREF in value:
+                add = True
+        if add:
+            results += result
+    return list(set(results))
 
 
 def parse(wat_file):
