@@ -1,5 +1,7 @@
 import json
 import urlparse
+from tldextract import tldextract
+import os
 
 wat_file = "..\\..\\..\\data\\sample_20.json"
 
@@ -11,6 +13,9 @@ PAYLOAD = 'Payload-Metadata'
 HTTP_RESPONSE = 'HTTP-Response-Metadata'
 HTML_METADATA = 'HTML-Metadata'
 LINKS = 'Links'
+
+DOT = "."
+FILE_SEP = ","
 
 RESPONSE = 'response'
 HREF = 'href'
@@ -70,7 +75,7 @@ def filter(links):
 
 
 def parse(wat_file):
-    with open(wat_file, "r", buffering=1) as inf, open("..\\..\\..\\data\\neo4j.csv", "w") as outf:
+    with open(wat_file, "r", buffering=1) as inf, open("..\\..\\..\\data\\nodes_parents_relationship.csv", "wb") as par_f, open("..\\..\\..\\data\\nodes_links.csv", "wb") as links_f:
         for line in inf:
             if "{" not in line:
                 continue
@@ -78,7 +83,20 @@ def parse(wat_file):
             if is_response(json_object):
                 target = get_target(json_object)
                 links = get_links(json_object)
-                outf.write(target + "\t" + str(links) + "\n")
+                target_domain = get_domain(target)
+                parent_nodes = [(target_domain, target)] + zip(map(get_domain, links), links)
+                for parent, node in parent_nodes:
+                    par_f.write(parent + FILE_SEP + node + os.linesep)
+                for link in links:
+                 links_f.write(target_domain + FILE_SEP + link + os.linesep)
+
+
+def get_domain(uri):
+    parsed_uri = urlparse.urlparse(uri)
+    netloc = '{uri.netloc}'.format(uri=parsed_uri)
+    extract_result = tldextract.extract(netloc)
+    domain = extract_result.domain + DOT + extract_result.suffix
+    return domain
 
 
 def main():
@@ -86,3 +104,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
