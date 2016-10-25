@@ -14,8 +14,12 @@ HTTP_RESPONSE = 'HTTP-Response-Metadata'
 HTML_METADATA = 'HTML-Metadata'
 LINKS = 'Links'
 
-DOT = "."
-FILE_SEP = ","
+DOT = '.'
+FILE_SEP = ','
+DOMAIN = 'Domain'
+PAGE = 'Page'
+SOURCE = 'Source'
+DESTINATION = 'Destination'
 
 RESPONSE = 'response'
 HREF = 'href'
@@ -76,6 +80,8 @@ def filter(links):
 
 def parse(wat_file):
     with open(wat_file, "r", buffering=1) as inf, open("..\\..\\..\\data\\nodes_parents_relationship.csv", "wb") as par_f, open("..\\..\\..\\data\\nodes_links.csv", "wb") as links_f:
+        par_f.write(DOMAIN + FILE_SEP + PAGE + os.linesep)
+        links_f.write(SOURCE + FILE_SEP + DESTINATION + os.linesep)
         for line in inf:
             if "{" not in line:
                 continue
