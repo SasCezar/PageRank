@@ -11,10 +11,11 @@ import org.apache.spark.graphx.lib._
 object App {
 
   def main(args: Array[String]) {
-    /*
+  /*
     val driver = GraphDatabase.driver("bolt://localhost", AuthTokens.basic("neo4j", "spokebest"))
     val session = driver.session()
 
+    /*
     session.run("CREATE (a:Person {name:'Scala_Arthur', title:'King'})")
     session.run("CREATE (a:Person {name:'Scala_Guinevere', title:'Quin'})")
 
@@ -25,6 +26,23 @@ object App {
       val record: Record = result.next
       System.out.println(record.get("title").asString + " " + record.get("name").asString)
     }
+    */
+
+    session.run("CREATE (a:Site {name:'Facebook'})")
+    session.run("CREATE (a:Site {name:'sub_facebook_1'})")
+    session.run("CREATE (a:Site {name:'sub_facebook_2'})")
+    session.run("CREATE (a:Site {name:'sub_facebook_3'})")
+
+    session.run("CREATE (a:Site {name:'Google'})")
+    session.run("CREATE (a:Site {name:'sub_google_1'})")
+    session.run("CREATE (a:Site {name:'sub_google_2'})")
+    session.run("CREATE (a:Site {name:'sub_google_3'})")
+
+    session.run("MATCH (n:Site), (m:Site {name:'Google'})  " + "WHERE n.name =~ '.*sub_google.*'" + "CREATE (m)-[:PARENT]->(n)")
+    session.run("MATCH (n:Site), (m:Site {name:'Facebook'})  " + "WHERE n.name =~ '.*sub_facebook.*'" + "CREATE (m)-[:PARENT]->(n)")
+    session.run("MATCH (m:Site {name:'sub_google_1'}), (n:Site {name:'sub_facebook_1'})" + "CREATE (m)-[:LINKS]->(n)")
+    session.run("MATCH (m:Site {name:'sub_google_2'}), (n:Site {name:'sub_facebook_2'})" + "CREATE (m)-[:LINKS]->(n)")
+
 
     session.close()
     driver.close()
@@ -42,10 +60,21 @@ object App {
     println("k " + k)
 
     val neo = Neo4j(sc)
-
+    /*
     val rdd = neo.cypher("MATCH (a:Person) RETURN a.name").loadRowRdd
     println("Query RDD " + rdd)
     println("Query count " + rdd.count)
+    */
+
+    val graphQuery = "MATCH (pa:Site)-[:PARENT]->(a:Site)-[:LINKS]->(b:Site)<-[:PARENT]-(pb:Site) RETURN id(pa),id(pb)"
+    val graph: Graph[Long, String] = neo.rels(graphQuery).loadGraph
+
+
+    println("Graph Nodes: " + graph.edges.count())
+
+    val graphRanked = PageRank.run(graph, 2)
+
+    graphRanked.vertices.top(2).foreach(t => println(t._1 + " " + t._2))
 
     sc.stop()
 
