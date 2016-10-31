@@ -5,12 +5,10 @@ import os
 from urllib.parse import unquote, quote
 import re
 
-
 regex = re.compile('(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s!()[]{};:\'".,<>?\xab\xbb\u201c\u201d\u2018\u2019]))',re.IGNORECASE)
 
-
-wat_file = "..\\..\\..\\data\\sample_500.json"
-#wat_file = "..\\..\\..\\data\\CC-MAIN-20160924173739-00000-ip-10-143-35-109.ec2.internal.warc.wat"
+#wat_file = "..\\..\\..\\data\\sample_500.json"
+wat_file = "..\\..\\..\\data\\CC-MAIN-20160924173739-00000-ip-10-143-35-109.ec2.internal.warc.wat"
 
 ENVELOPE = 'Envelope'
 WARC_HEADER = 'WARC-Header-Metadata'
@@ -28,6 +26,7 @@ PAGE = 'Page'
 SOURCE = 'Source'
 DESTINATION = 'Destination'
 NODE = 'Node'
+
 
 RESPONSE = 'response'
 HREF = 'href'
@@ -72,6 +71,8 @@ def get_links(json):
 JAVASCRIPT = 'javascript:'
 MAIL_TO = "mailto:"
 COMMA = ","
+TEL = "tel:"
+WHATSAPP = "whatsapp:"
 
 def filter(links):
     """
@@ -88,22 +89,25 @@ def filter(links):
                 url_result = urlparse(value)
             except:
                 continue
-            if key in URL_TYPES and JAVASCRIPT not in value and MAIL_TO not in value and COMMA not in value and bool(url_result.scheme):
+            low_value = value.lower()
+            if key in URL_TYPES and JAVASCRIPT not in low_value and MAIL_TO not in low_value \
+                    and COMMA not in low_value and TEL not in low_value and WHATSAPP not in low_value \
+                    and bool(url_result.scheme):
                 result = value
             if HREF in value:
                 add = True
         if add and result:
-            results += [unquote(result).replace(" ", "%20").replace(":&#47;&#47;", "://")]
+            results += [unquote(result).replace(" ", "%20").replace(":&#47;&#47;", "://").strip()]
     return list(set(results))
 
-
+NUM = "_ALL"
 
 def parse(wat_file):
     MODE = "wt"
     with open(wat_file, "r", encoding="utf-8", newline='') as inf, \
-            open("..\\..\\..\\data\\nodes.csv", MODE, encoding="utf-8", newline='') as node_f, \
-            open("..\\..\\..\\data\\parents_relationship.csv", MODE, encoding="utf-8", newline='') as par_f, \
-            open("..\\..\\..\\data\\nodes_links.csv", MODE, encoding="utf-8", newline='') as links_f:
+            open("..\\..\\..\\data\\nodes" + NUM + ".csv", MODE, encoding="utf-8", newline='') as node_f, \
+            open("..\\..\\..\\data\\parents_relationship" + NUM + ".csv", MODE, encoding="utf-8", newline='') as par_f, \
+            open("..\\..\\..\\data\\nodes_links" + NUM + ".csv", MODE, encoding="utf-8", newline='') as links_f:
         par_f.write(DOMAIN + FILE_SEP + PAGE + os.linesep)
         links_f.write(SOURCE + FILE_SEP + DESTINATION + os.linesep)
         node_f.write(NODE + os.linesep)
@@ -136,8 +140,16 @@ def get_domain(uri):
     return domain
 
 
+def count(path):
+    i = 0
+    with open(path, "r", encoding = "utf8") as f:
+        for line in f:
+            i += 1
+    print(i)
+
 def main():
-    parse(wat_file)
+    count("..\\..\\..\\data\\parents_relationship_ALL.csv")
+    #parse(wat_file)
 
 if __name__ == "__main__":
     main()
