@@ -3,11 +3,8 @@ from urllib.parse import urlparse
 from tldextract import tldextract
 import os
 from urllib.parse import unquote, quote
-import re
 
-regex = re.compile('(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s!()[]{};:\'".,<>?\xab\xbb\u201c\u201d\u2018\u2019]))',re.IGNORECASE)
-
-#wat_file = "..\\..\\..\\data\\sample_500.json"
+# wat_file = "..\\..\\..\\data\\sample_500.json"
 wat_file = "..\\..\\..\\data\\CC-MAIN-20160924173739-00000-ip-10-143-35-109.ec2.internal.warc.wat"
 
 ENVELOPE = 'Envelope'
@@ -26,7 +23,6 @@ PAGE = 'Page'
 SOURCE = 'Source'
 DESTINATION = 'Destination'
 NODE = 'Node'
-
 
 RESPONSE = 'response'
 HREF = 'href'
@@ -64,7 +60,7 @@ def get_links(json):
     if HTML_METADATA in response:
         if LINKS in json[ENVELOPE][PAYLOAD][HTTP_RESPONSE][HTML_METADATA]:
             page_links = json[ENVELOPE][PAYLOAD][HTTP_RESPONSE][HTML_METADATA][LINKS]
-            print(filter(page_links))
+            # print(filter(page_links))
     return filter(page_links)
 
 
@@ -73,6 +69,7 @@ MAIL_TO = "mailto:"
 COMMA = ","
 TEL = "tel:"
 WHATSAPP = "whatsapp:"
+
 
 def filter(links):
     """
@@ -100,7 +97,9 @@ def filter(links):
             results += [unquote(result).replace(" ", "%20").replace(":&#47;&#47;", "://").strip()]
     return list(set(results))
 
+
 NUM = "_ALL"
+
 
 def parse(wat_file):
     MODE = "wt"
@@ -124,7 +123,12 @@ def parse(wat_file):
                 for parent, node in parent_nodes:
                     nodes.add(parent)
                     nodes.add(node)
-                    par_f.write(parent + FILE_SEP + node + os.linesep)
+
+                    try:
+                        par_f.write(parent + FILE_SEP + node.encode("utf8") + os.linesep)
+                    except:
+                        par_f.write(parent + FILE_SEP + node + os.linesep)
+                    #par_f.write(parent + FILE_SEP + node + os.linesep)
                 for link in links:
                     nodes.add(link)
                     links_f.write(target + FILE_SEP + link + os.linesep)
@@ -142,15 +146,16 @@ def get_domain(uri):
 
 def count(path):
     i = 0
-    with open(path, "r", encoding = "utf8") as f:
+    with open(path, "r", encoding="utf8") as f:
         for line in f:
             i += 1
     print(i)
 
+
 def main():
-    count("..\\..\\..\\data\\parents_relationship_ALL.csv")
-    #parse(wat_file)
+    #count("..\\..\\..\\data\\nodes_ALL.csv")
+    parse(wat_file)
+
 
 if __name__ == "__main__":
     main()
-
