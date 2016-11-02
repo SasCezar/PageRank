@@ -6,13 +6,16 @@ import org.apache.spark.SparkConf
 import org.neo4j.spark._
 import org.apache.spark.graphx._
 import org.apache.spark.graphx.lib._
+import org.neo4j.cypher.internal.compiler.v2_3.On.Match
+
+//import org.anormcypher._
 
 
 object App {
 
   def main(args: Array[String]) {
-  /*
-    val driver = GraphDatabase.driver("bolt://localhost", AuthTokens.basic("neo4j", "spokebest"))
+
+    val driver = GraphDatabase.driver("bolt://localhost", AuthTokens.basic("neo4j", "napoleone"))
     val session = driver.session()
 
     /*
@@ -28,6 +31,7 @@ object App {
     }
     */
 
+    /*
     session.run("CREATE (a:Site {name:'Facebook'})")
     session.run("CREATE (a:Site {name:'sub_facebook_1'})")
     session.run("CREATE (a:Site {name:'sub_facebook_2'})")
@@ -42,15 +46,14 @@ object App {
     session.run("MATCH (n:Site), (m:Site {name:'Facebook'})  " + "WHERE n.name =~ '.*sub_facebook.*'" + "CREATE (m)-[:PARENT]->(n)")
     session.run("MATCH (m:Site {name:'sub_google_1'}), (n:Site {name:'sub_facebook_1'})" + "CREATE (m)-[:LINKS]->(n)")
     session.run("MATCH (m:Site {name:'sub_google_2'}), (n:Site {name:'sub_facebook_2'})" + "CREATE (m)-[:LINKS]->(n)")
-
-
-    session.close()
-    driver.close()
     */
+
+    //session.close()
+    //driver.close()
 
     val conf = new SparkConf().setAppName("SparkDBP").setMaster("local")
     conf.set("spark.neo4j.bolt.user", "neo4j")
-    conf.set("spark.neo4j.bolt.password", "spokebest")
+    conf.set("spark.neo4j.bolt.password", "napoleone")
     val sc = new SparkContext(conf)
 
     val data = Array(1, 2, 3, 4, 5)
@@ -67,16 +70,48 @@ object App {
     */
 
     val graphQuery = "MATCH (pa:Site)-[:PARENT]->(a:Site)-[:LINKS]->(b:Site)<-[:PARENT]-(pb:Site) RETURN id(pa),id(pb)"
+    //Create Graphx Graph
     val graph: Graph[Long, String] = neo.rels(graphQuery).loadGraph
 
+    //graph.vertices.collect.foreach(println)
+    //graph.vertices.top(2).foreach(f => println(" " + f._1 + " " + f._2))
+    //val q1 = "MATCH (s) WHERE id(s) RETURN s.name"
 
     println("Graph Nodes: " + graph.edges.count())
 
     val graphRanked = PageRank.run(graph, 2)
 
-    graphRanked.vertices.top(2).foreach(t => println(t._1 + " " + t._2))
+    //val x = List()
+    //var list = List[Double]()
+    var list:List[Double] = Nil
 
+    graphRanked.vertices.top(2).foreach(t => println("Node id : " + t._1 + " Page_Rank : " + t._2))
+
+    //graphRanked.vertices.top(2).foreach(z => list(z._2))
+    //val test = List(1,2,3)
+    //list.foreach(println(_))
+
+    //Set new PR Values in Neo4j
+    graphRanked.vertices.top(2).foreach(z => session.run("MATCH (s) WHERE id(s) = " + z._1 + " SET s.PageRank = " + z._2))
+
+    //val q2 = "MATCH (s) WHERE id(s)=f._1 SET s.PageRank = f._2 RETURN s"
+    //session.run("MATCH (s) WHERE id(s) = 3267 SET s.PageRank = 20")
+
+    val q3 = "MATCH (s) WHERE id(s) = 3267 SET s.PageRank = 15"
+    //Graph[Long, String] = neo.rels(q3).loadGraph
+
+    //graphRanked.vertices.top(2).foreach(f => session.run(q2))
+    //graphRanked.vertices.top(2).foreach(f => println)
+
+    /*
+    val q3 = "MATCH (s) WHERE id(s)= 1114 SET s.pagerank = 15"
+    val q4 = "MATCH (s) WHERE id(s) = 1114 RETURN s.name"
+    //println(" " + neo.cypher(q4))
+    session.run(q3)
+    */
+
+    session.close()
+    driver.close()
     sc.stop()
-
   }
 }
