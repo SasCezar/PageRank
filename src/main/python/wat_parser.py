@@ -160,25 +160,12 @@ def parse(wat_file):
                     nodes_csv.writerow([node])
 
 
-def count(path):
+def count_rows(path):
     i = 0
     with open(path, "r", encoding="utf8") as f:
-        for _line in f:
+        for _ in f:
             i += 1
-    print(i)
-
-
-def clean_parents(csv_file):
-    with open("..\\..\\..\\data\\" + csv_file, "r", encoding="utf8") as par_f, \
-            open("..\\..\\..\\data\\correct_" + csv_file, "w", encoding="utf8", newline='') as par_o:
-        csv_reader = csv.reader(par_f, delimiter=FILE_SEP)
-        csv_writer = csv.writer(par_o, delimiter=FILE_SEP, quoting=QUOTING_TYPE)
-        csv_writer.writerow([DOMAIN, PAGE])
-        i = 0
-        for domain, page in csv_reader:
-            print(i)
-            i += 1
-            csv_writer.writerow([domain, page])
+    return i
 
 
 def extract_sample(wat_path, limit):
