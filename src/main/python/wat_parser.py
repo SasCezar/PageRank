@@ -117,7 +117,7 @@ def filter(links):
                 continue
 
             low_value = value.lower()
-            if any(element not in low_value for element in BLACK_LIST) and bool(url_result.scheme):
+            if all(element not in low_value for element in BLACK_LIST) and bool(url_result.scheme):
                 result = value
                 results += [unquote(result).strip().replace(" ", "%20").replace(":&#47;&#47;", "://").replace("\"\"", "")]
 
@@ -169,13 +169,15 @@ def count(path):
 
 
 def clean_parents(csv_file):
-    with open(csv_file, "r", encoding="utf8") as par_f, \
+    with open("..\\..\\..\\data\\" + csv_file, "r", encoding="utf8") as par_f, \
             open("..\\..\\..\\data\\correct_" + csv_file, "w", encoding="utf8", newline='') as par_o:
         csv_reader = csv.reader(par_f, delimiter=FILE_SEP)
         csv_writer = csv.writer(par_o, delimiter=FILE_SEP, quoting=QUOTING_TYPE)
         csv_writer.writerow([DOMAIN, PAGE])
-
+        i = 0
         for domain, page in csv_reader:
+            print(i)
+            i += 1
             csv_writer.writerow([domain, page])
 
 
