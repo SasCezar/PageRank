@@ -17,7 +17,10 @@ object Main {
 
     val database = new Database(username, password, Neo4j(sc))
 
-    database.clearDB().createSample()
+    // database.clearDB()
+
+    // database.loadParentsRelationship("parents_relationship_5000.csv")
+    // database.loadNodesLinks("nodes_links_5000.csv")
 
     val graph: Graph[Long, String] = database.loadLinksGraph().loadGraph
 
@@ -25,8 +28,9 @@ object Main {
 
     rankedGraph.vertices.collect().foreach(node =>
       {
-        println(node._2)
+        println(node._1 + "\t" + node._2)
         database.savePageRankValue(node._1, node._2)
-      })
+      }
+    )
   }
 }

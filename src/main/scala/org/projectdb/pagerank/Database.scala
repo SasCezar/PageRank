@@ -10,12 +10,12 @@ class Database(username: String, password: String, neo: Neo4j) {
 
 
   def loadParentsRelationship(filePath: String): this.type = {
+    session.run("CREATE INDEX ON :Domain(name)")
+    session.run("CREATE INDEX ON :Site(name)")
     session.run(
-      """CREATE INDEX ON :Domain(name)
-        |CREATE INDEX ON :Site(name)
-        |USING PERIODIC COMMIT 500
-        |LOAD CSV WITH HEADERS FROM file:///""" + filePath +
-        """ as csvimport FIELDTERMINATOR '\t'
+      """USING PERIODIC COMMIT 500
+        |LOAD CSV WITH HEADERS FROM \"file:///""" + filePath +
+        """\" as csvimport FIELDTERMINATOR '\t'
           |MERGE (d:Domain {name:csvimport.Domain})
           |MERGE (s:Site {name:csvimport.Page})
           |MERGE (d)-[:PARENT_OF]->(s)
@@ -25,11 +25,9 @@ class Database(username: String, password: String, neo: Neo4j) {
 
   def loadNodesLinks(filePath: String): this.type = {
     session.run(
-      """CREATE INDEX ON :Domain(name)
-        |CREATE INDEX ON :Site(name)
-        |USING PERIODIC COMMIT 500
-        |LOAD CSV WITH HEADERS FROM file:///""" + filePath +
-        """ as csvimport FIELDTERMINATOR '\t'
+      """USING PERIODIC COMMIT 500
+        |LOAD CSV WITH HEADERS FROM \"file:///""" + filePath +
+        """\" as csvimport FIELDTERMINATOR '\t'
           |MERGE (s:Site {name:csvimport.Source})
           |MERGE (d:Site {name:csvimport.Destination})
           |MERGE (s)-[:LINKS_TO]->(d)
@@ -45,22 +43,23 @@ class Database(username: String, password: String, neo: Neo4j) {
   def loadLinksGraph(): Neo4j = {
     val relationQuery =
       """MATCH (pa:Domain)-[:PARENT_OF]->(a:Site)-[:LINKS_TO]->(b:Site)<-[:PARENT_OF]-(pb:Domain)
-        |RETURN id(pa),id(pb)""".stripMargin
+        |RETURN id(pa),id(pb)
+        |LIMIT 100000""".stripMargin
 
     neo.rels(relationQuery)
   }
 
   def savePageRankValue(nodeID: Long, value: Double): this.type ={
-    session.run("MATCH (s) WHERE id(s) = " + nodeID + " SET s.PageRank = toFloat(" + value + ")")
+    session.run("MATCH (s) WHERE id(s) = " + nodeID + " SET s.pageRank = toFloat(" + value + ")")
     this
   }
 
   def getPageRank(domain: String): Double = {
-    session.run("MATCH (s:Site) WHERE s.name = " + domain + "RETURN s.PageRank").toString.toDouble
+    session.run("MATCH (s:Site) WHERE s.name = " + domain + "RETURN s.pageRank").toString.toDouble
   }
 
   def getPageRank(nodeID: Long): Double = {
-    session.run("MATCH (s:Site) WHERE id(s) = " + nodeID + "RETURN s.PageRank").toString.toDouble
+    session.run("MATCH (s:Site) WHERE id(s) = " + nodeID + "RETURN s.pageRank").toString.toDouble
   }
 
   def createSample(): this.type = {
