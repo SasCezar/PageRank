@@ -1,6 +1,6 @@
 package org.projectdb.pagerank
 
-import org.neo4j.driver.v1.{AuthTokens, Driver, GraphDatabase, Session}
+import org.neo4j.driver.v1._
 import org.neo4j.spark.Neo4j
 
 
@@ -12,26 +12,13 @@ class Database(username: String, password: String, neo: Neo4j) {
   def loadParentsRelationship(filePath: String): this.type = {
     session.run("CREATE INDEX ON :Domain(name)")
     session.run("CREATE INDEX ON :Site(name)")
-    session.run(
-      """USING PERIODIC COMMIT 500
-        |LOAD CSV WITH HEADERS FROM \"file:///""" + filePath +
-        """\" as csvimport FIELDTERMINATOR '\t'
-          |MERGE (d:Domain {name:csvimport.Domain})
-          |MERGE (s:Site {name:csvimport.Page})
-          |MERGE (d)-[:PARENT_OF]->(s)
-        """.stripMargin)
+    session.run("USING PERIODIC COMMIT 500 LOAD CSV WITH HEADERS FROM 'file:///" + filePath + "'as csvimport FIELDTERMINATOR '\\t' MERGE (d:Domain {name:csvimport.Domain}) MERGE (s:Site {name:csvimport.Page}) MERGE (d)-[:PARENT_OF]->(s)")
+
     this
   }
 
   def loadNodesLinks(filePath: String): this.type = {
-    session.run(
-      """USING PERIODIC COMMIT 500
-        |LOAD CSV WITH HEADERS FROM \"file:///""" + filePath +
-        """\" as csvimport FIELDTERMINATOR '\t'
-          |MERGE (s:Site {name:csvimport.Source})
-          |MERGE (d:Site {name:csvimport.Destination})
-          |MERGE (s)-[:LINKS_TO]->(d)
-        """.stripMargin)
+    session.run("USING PERIODIC COMMIT 500 LOAD CSV WITH HEADERS FROM 'file:///" + filePath + "' as csvimport FIELDTERMINATOR '\\t' MERGE (s:Site {name:csvimport.Source}) MERGE (d:Site {name:csvimport.Destination}) MERGE (s)-[:LINKS_TO]->(d)")
     this
   }
 
@@ -44,22 +31,22 @@ class Database(username: String, password: String, neo: Neo4j) {
     val relationQuery =
       """MATCH (pa:Domain)-[:PARENT_OF]->(a:Site)-[:LINKS_TO]->(b:Site)<-[:PARENT_OF]-(pb:Domain)
         |RETURN id(pa),id(pb)
-        |LIMIT 100000""".stripMargin
+        | """.stripMargin
 
     neo.rels(relationQuery)
   }
 
-  def savePageRankValue(nodeID: Long, value: Double): this.type ={
-    session.run("MATCH (s) WHERE id(s) = " + nodeID + " SET s.pageRank = toFloat(" + value + ")")
+  def savePageRankValue(nodeID: Long, value: Double): this.type = {
+    session.run("MATCH (s) WHERE id(s) = " + nodeID + " SET s.page_rank = toFloat(" + value + ")")
     this
   }
 
   def getPageRank(domain: String): Double = {
-    session.run("MATCH (s:Site) WHERE s.name = " + domain + "RETURN s.pageRank").toString.toDouble
+    session.run("MATCH (s:Site) WHERE s.name = " + domain + "RETURN s.page_rank").toString.toDouble
   }
 
   def getPageRank(nodeID: Long): Double = {
-    session.run("MATCH (s:Site) WHERE id(s) = " + nodeID + "RETURN s.pageRank").toString.toDouble
+    session.run("MATCH (s:Site) WHERE id(s) = " + nodeID + "RETURN s.page_rank").toString.toDouble
   }
 
   def createSample(): this.type = {
