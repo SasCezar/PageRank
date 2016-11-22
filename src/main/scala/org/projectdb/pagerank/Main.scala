@@ -4,6 +4,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.neo4j.spark._
 import org.apache.spark.graphx._
 import org.apache.spark.graphx.lib._
+import java.io._
 
 object Main {
   val username:String = "neo4j"
@@ -17,22 +18,22 @@ object Main {
 
     val database = new Database(username, password, Neo4j(sc))
 
-    database.clearDB()
-
-    database.loadParentsRelationship("parents_relationship_5000.csv")
-    database.loadNodesLinks("nodes_links_5000.csv")
+    //database.clearDB()
 
     val graph: Graph[Long, String] = database.loadLinksGraph().loadGraph
 
     print(graph.vertices.count() + "\t" + graph.edges.count())
-    val rankedGraph = PageRank.runUntilConvergence(graph, 0.00001)
+    val rankedGraph = PageRank.run(graph, 5)
 
     print(rankedGraph.vertices.count() + "\t" + rankedGraph.edges.count())
+    val pw = new PrintWriter(new File("C:\\Users\\Darius\\Documents\\Neo4j\\graph.db\\import\\PageRanks.txt" ))
+    pw.write("NodeID" + "\t" + "Score"+ "\r\n")
     rankedGraph.vertices.collect().foreach(node =>
       {
-        //println(node._1 + "\t" + node._2)
-        database.savePageRankValue(node._1, node._2)
+        pw.write(node._1 + "\t" + node._2 + "\r\n")
       }
     )
+    pw.close()
+    database.savePageRankValue("PageRanks.txt")
   }
 }

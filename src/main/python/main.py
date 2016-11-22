@@ -1,6 +1,6 @@
 import wat_parser
 
-samples = [50000]
+samples = [15000]
 wat_file = "..\\..\\..\\data\\CC-MAIN-20160924173739-00000-ip-10-143-35-109.ec2.internal.warc.wat"
 
 def main():
